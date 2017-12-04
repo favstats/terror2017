@@ -39,71 +39,109 @@ pages <- urldata %>%
                html_nodes("table") 
                )
 
-# jan_dat <- html_table(pages[[1]][1])  %>% as.data.frame()
-# feb_dat <- html_table(pages[[2]][1])  %>% as.data.frame()
-# mar_dat <- html_table(pages[[3]][1])  %>% as.data.frame()
-# apr_dat <- html_table(pages[[4]][1])  %>% as.data.frame()
-# may_dat <- html_table(pages[[5]][1])  %>% as.data.frame()
-# jun_dat <- html_table(pages[[6]][1])  %>% as.data.frame()
-# jul_dat <- html_table(pages[[7]][1])  %>% as.data.frame()
-# aug_dat <- html_table(pages[[8]][1])  %>% as.data.frame()
-# sep_dat <- html_table(pages[[9]][1])  %>% as.data.frame()
-# oct_dat <- html_table(pages[[10]][1]) %>% as.data.frame()
-# nov_dat <- html_table(pages[[11]][1]) %>% as.data.frame()
-# dec_dat <- html_table(pages[[12]][1]) %>% as.data.frame()
+ jan_dat <- html_table(pages[[1]][1])  %>% as.data.frame()
+ feb_dat <- html_table(pages[[2]][1])  %>% as.data.frame()
+ mar_dat <- html_table(pages[[3]][1])  %>% as.data.frame()
+ apr_dat <- html_table(pages[[4]][1])  %>% as.data.frame()
+ may_dat <- html_table(pages[[5]][1])  %>% as.data.frame()
+ jun_dat <- html_table(pages[[6]][1])  %>% as.data.frame()
+ jul_dat <- html_table(pages[[7]][1])  %>% as.data.frame()
+ aug_dat <- html_table(pages[[8]][1])  %>% as.data.frame()
+ sep_dat <- html_table(pages[[9]][1])  %>% as.data.frame()
+ oct_dat <- html_table(pages[[10]][1]) %>% as.data.frame()
+ nov_dat <- html_table(pages[[11]][1]) %>% as.data.frame()
+ dec_dat <- html_table(pages[[12]][1]) %>% as.data.frame()
 
-month <- c("Januar",
-           "February",
-           "March",
-           "April",
-           "May",
-           "June",
-           "July",
-           "August",
-           "September",
-           "October",
-           "November",
-           "December")
-
-dat_ready <- list()
-month <- 
-for( jj in seq_along(pages)){
-  dat_ready[[jj]] <- html_table(pages[[1]][[1]])
-dat_ready[[jj]]$month <- month[jj]
-cat(jj)
-}
-
-terror <- bind_rows(dat_ready)
-
-# jan_dat$month <- "January"
-# feb_dat$month <- "February"
-# mar_dat$month <- "March"
-# apr_dat$month <- "April"
-# may_dat$month <- "May"
-# jun_dat$month <- "June"
-# jul_dat$month <- "July"
-# aug_dat$month <- "August"
-# sep_dat$month <- "September"
-# oct_dat$month <- "October"
-# nov_dat$month <- "November"
-# dec_dat$month <- "December"
+# month <- c("Januar",
+#            "February",
+#            "March",
+#            "April",
+#            "May",
+#            "June",
+#            "July",
+#            "August",
+#            "September",
+#            "October",
+#            "November",
+#            "December")
 # 
-# terror <- rbind(jan_dat,
-#       feb_dat,
-#       mar_dat,
-#       apr_dat,
-#       may_dat,
-#       jun_dat,
-#       jul_dat,
-#       aug_dat,
-#       sep_dat,
-#       oct_dat,
-#       nov_dat,
-#       dec_dat)
+# dat_ready <- list()
+# for( jj in seq_along(pages)){
+#   dat_ready[[jj]] <- html_table(pages[[1]][[1]])
+#   dat_ready[[jj]]$month <- month[jj]
+#   cat(jj)
+# }
 
-library(sjmisc)
-frq(terror$Perpetrator)
+# terror <- bind_rows(dat_ready)
+
+ jan_dat$month <- "January"
+ feb_dat$month <- "February"
+ mar_dat$month <- "March"
+ apr_dat$month <- "April"
+ may_dat$month <- "May"
+ jun_dat$month <- "June"
+ jul_dat$month <- "July"
+ aug_dat$month <- "August"
+ sep_dat$month <- "September"
+ oct_dat$month <- "October"
+ nov_dat$month <- "November"
+ dec_dat$month <- "December"
+ 
+ terror <- rbind(jan_dat,
+       feb_dat,
+       mar_dat,
+       apr_dat,
+       may_dat,
+       jun_dat,
+       jul_dat,
+       aug_dat,
+       sep_dat,
+       oct_dat,
+       nov_dat,
+       dec_dat)
+
+p_load(lubridate, car, readr, sjmisc)
+terror$date <- paste(terror$Date, terror$month, "2017") %>% 
+               dmy()
+
+
+terror <- terror %>% 
+  mutate(deaths = Recode(Dead,
+                         "'Unknown' = NA"),
+         deaths = parse_number(deaths))
+  
+injuries <- Recode(terror$Injured,"'Unknown' = NA")
+injuries <- parse_number(injuries)
+
+terror$deaths
+
+data.frame(table(terror$Perpetrator))
+
+conds <- terror %>% 
+  group_by(Perpetrator) %>% 
+  count() %>% 
+  filter(n > 20)
+
+dput(conds$Perpetrator)
+
+terror %>% 
+  filter(Perpetrator %in% c("Al-Shabaab", 
+                            "Boko Haram", 
+                            "ELN", 
+                            "Islamic State", 
+                            "PKK", 
+                            "Taliban")) %>% 
+  filter(deaths > 20) %>% 
+  ggplot(aes(date, deaths, group = Perpetrator, color = Perpetrator)) + 
+        geom_line() +              
+        scale_x_date() + 
+        xlab("") + 
+        ylab("Death Count")
+
+frq(terror$Dead)
 frq(terror$`Part of`)
+
+table(terror$month)
 
 
 countdat_partof <- data.frame(table(terror$`Part of`))
