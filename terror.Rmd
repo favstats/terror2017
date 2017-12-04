@@ -1,0 +1,182 @@
+---
+title: "Your Document Title"
+author: "Document Author"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+```{r}
+library(pacman)
+p_load(tidyverse, rvest)
+
+
+urldata <- c("https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_January_2017", 
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_February_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_March_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_April_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_May_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_June_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_July_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_August_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_September_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_October_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_November_2017",
+                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_December_2017")
+
+# temp <- URLjanuary %>% 
+#   read_html() %>%
+#   html_nodes("table")
+# 
+# html_table(temp[1]) ## Just the "legend" table
+# html_table(temp[2]) ## The table you're interested in
+
+pages <- urldata %>%
+         map(read_html) %>%
+         map(. %>% 
+               html_nodes("table") 
+               )
+
+# jan_dat <- html_table(pages[[1]][1])  %>% as.data.frame()
+# feb_dat <- html_table(pages[[2]][1])  %>% as.data.frame()
+# mar_dat <- html_table(pages[[3]][1])  %>% as.data.frame()
+# apr_dat <- html_table(pages[[4]][1])  %>% as.data.frame()
+# may_dat <- html_table(pages[[5]][1])  %>% as.data.frame()
+# jun_dat <- html_table(pages[[6]][1])  %>% as.data.frame()
+# jul_dat <- html_table(pages[[7]][1])  %>% as.data.frame()
+# aug_dat <- html_table(pages[[8]][1])  %>% as.data.frame()
+# sep_dat <- html_table(pages[[9]][1])  %>% as.data.frame()
+# oct_dat <- html_table(pages[[10]][1]) %>% as.data.frame()
+# nov_dat <- html_table(pages[[11]][1]) %>% as.data.frame()
+# dec_dat <- html_table(pages[[12]][1]) %>% as.data.frame()
+
+month <- c("Januar",
+           "February",
+           "March",
+           "April",
+           "May",
+           "June",
+           "July",
+           "August",
+           "September",
+           "October",
+           "November",
+           "December")
+
+dat_ready <- list()
+month <- 
+for( jj in seq_along(pages)){
+  dat_ready[[jj]] <- html_table(pages[[1]][[1]])
+dat_ready[[jj]]$month <- month[jj]
+cat(jj)
+}
+
+terror <- bind_rows(dat_ready)
+
+# jan_dat$month <- "January"
+# feb_dat$month <- "February"
+# mar_dat$month <- "March"
+# apr_dat$month <- "April"
+# may_dat$month <- "May"
+# jun_dat$month <- "June"
+# jul_dat$month <- "July"
+# aug_dat$month <- "August"
+# sep_dat$month <- "September"
+# oct_dat$month <- "October"
+# nov_dat$month <- "November"
+# dec_dat$month <- "December"
+# 
+# terror <- rbind(jan_dat,
+#       feb_dat,
+#       mar_dat,
+#       apr_dat,
+#       may_dat,
+#       jun_dat,
+#       jul_dat,
+#       aug_dat,
+#       sep_dat,
+#       oct_dat,
+#       nov_dat,
+#       dec_dat)
+
+library(sjmisc)
+frq(terror$Perpetrator)
+frq(terror$`Part of`)
+
+
+countdat_partof <- data.frame(table(terror$`Part of`))
+
+countdat_partof %>% 
+  filter(Freq > 20) %>% 
+  arrange(Freq) %>% 
+  mutate(conflict = factor(Var1, levels = unique(Var1))) %>% 
+  ggplot(aes(conflict)) + 
+  geom_bar(aes(weight = Freq, fill = Var1)) + 
+  coord_flip() +
+  theme(legend.position="none")
+
+countdat_terror <- data.frame(table(terror$Perpetrator))
+
+countdat_terror %>% 
+  filter(Freq > 20) %>% 
+  arrange(Freq) %>% 
+  mutate(terror_group = factor(Var1, levels = unique(Var1))) %>% 
+  ggplot(aes(terror_group)) + 
+  geom_bar(aes(weight = Freq, fill = Var1)) + 
+  coord_flip() +
+  theme(legend.position="none")
+
+```
+
+
+## A New Output Format
+
+```{r}
+library(rvest)
+library(purrr)
+
+topmovies <- read_html("http://www.imdb.com/chart/top")
+links <- topmovies %>%
+  html_nodes(".titleColumn") %>%
+  html_nodes("a") %>%
+  html_attr("href") %>% 
+  xml2::url_absolute("http://imdb.com") %>% 
+  .[1:5] # for testing
+
+pages <- links %>% map(read_html)
+
+title <- pages %>% 
+  map_chr(. %>% 
+    html_nodes("h1") %>% 
+    html_text()
+  )
+rating <- pages %>% 
+  map_dbl(. %>% 
+    html_nodes("strong span") %>% 
+    html_text() %>% 
+    as.numeric()
+  )
+```
+
+
+
+## Your Familiar Tools
+
+Feel free to use the `knitr` infrastructure with dozens of tunable options in
+your document.
+
+```{r fig.width=6, fig.height=6, fig.align='center'}
+set.seed(123)
+n <- 1000
+x1  <- matrix(rnorm(n), ncol = 2)
+x2  <- matrix(rnorm(n, mean = 3, sd = 1.5), ncol = 2)
+x   <- rbind(x1, x2)
+head(x)
+smoothScatter(x, xlab = "x1", ylab = "x2")
+```
+
+You can include code snippets of languages other than R, but note that
+the block header has no curly brackets around the language name.
+
