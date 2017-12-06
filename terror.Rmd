@@ -9,30 +9,115 @@ output:
 ---
 
 ```{r}
-library(pacman)
-p_load(tidyverse, rvest)
+pacman::p_load(tidyverse, rvest, XML)
 
 
-urldata <- c("https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_January_2017", 
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_February_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_March_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_April_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_May_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_June_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_July_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_August_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_September_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_October_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_November_2017",
-                               "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_December_2017")
+url_base<- c("https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in")
 
-# temp <- URLjanuary %>% 
+url_month <- c("January",
+           "February",
+           "March",
+           "April",
+           "May",
+           "June",
+           "July",
+           "August",
+           "September",
+           "October",
+           "November",
+           "December")
+
+url_months <- rep(url_month, 3)
+
+url_data <- paste(url_base, url_month, rep(2015:2017, each = 12), sep = "_")
+
+scrape <- function(html){
+  tab <- html %>% 
+    read_html() %>%
+    html_node("table") %>% 
+    html_table()
+  if(nrow(tab) < 2){
+   placeholder <-  html %>% 
+    read_html() %>%
+    html_nodes("table")
+  tab <- html_table(placeholder[2], fill = TRUE)
+  }
+  return(tab)
+} 
+
+pagelist <- list()
+for(page in seq_along(url_data)) {
+  pagelist[[page]] <- scrape(url_data[[page]]) %>% 
+                        as.data.frame() %>% 
+                        mutate(month = url_months[page]) %>% 
+                        mutate_all(as.character)
+  cat(page)
+}
+
+pagelist
+
+terror <- bind_rows(pagelist)
+
+terror$partof <- paste(terror$`Part of`, terror$Part.of)
+terror$deaths <- paste(terror$Dead, terror$dead)
+
+
+terror <- terror %>% 
+  mutate(partof = partof %>%   
+    str_replace_all("NA", "") %>% 
+    str_trim()) %>% 
+  mutate(deaths = deaths %>%   
+    str_replace_all("NA", "") %>% 
+    str_trim()) %>% 
+  mutate(deaths = deaths %>% 
+    str_replace("\\(.*?\\)$", "") %>% 
+    str_trim()) %>% 
+  mutate(deaths = deaths %>% 
+    str_replace_all("\\+", "") %>% 
+    str_trim()) %>% 
+  mutate(deaths = deaths %>% 
+           str_replace_all("UnknownEst. ", "") %>% 
+           str_trim()) #%>% 
+  mutate(deaths = case_when(
+    deaths %in% "Unknown" ~ NA
+  ))
+
+terror$deaths %>% 
+  str_replace_all("\\+", "")
+
+terror$deaths %>% 
+  parse_number()
+
+terror$deaths %>% 
+  str_split("[:punc:]") # "\\s"
+
+# temp <- "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_December_2017" %>% 
 #   read_html() %>%
 #   html_nodes("table")
 # 
 # html_table(temp[1]) ## Just the "legend" table
 # html_table(temp[2]) ## The table you're interested in
 
+pages_map <- url_data %>%
+         map(scrape)
+
+terror <- bind_rows(pages_map)
+
+ss <-  "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_December_2017" %>% 
+  read_html() %>%
+  html_nodes("table")
+ss <-  "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_June_2016" %>% 
+  read_html() %>%
+  html_nodes("table")
+
+html_table(ss[2])
+
+mean(2)
+```
+
+## Old Code
+
+```{r}
 pages <- urldata %>%
          map(read_html) %>%
          map(. %>% 
@@ -52,7 +137,7 @@ pages <- urldata %>%
  nov_dat <- html_table(pages[[11]][1]) %>% as.data.frame()
  dec_dat <- html_table(pages[[12]][1]) %>% as.data.frame()
 
-# month <- c("Januar",
+# month <- c("January",
 #            "February",
 #            "March",
 #            "April",
@@ -100,7 +185,7 @@ pages <- urldata %>%
        nov_dat,
        dec_dat)
 
-p_load(lubridate, car, readr, sjmisc)
+pacman::p_load(lubridate, car, readr, sjmisc)
 terror$date <- paste(terror$Date, terror$month, "2017") %>% 
                dmy()
 
@@ -144,7 +229,7 @@ frq(terror$`Part of`)
 table(terror$month)
 
 
-countdat_partof <- data.frame(table(terror$`Part of`))
+countdat_partof <- data.frame(table(terror$partof))
 
 countdat_partof %>% 
   filter(Freq > 20) %>% 
@@ -165,6 +250,7 @@ countdat_terror %>%
   geom_bar(aes(weight = Freq, fill = Var1)) + 
   coord_flip() +
   theme(legend.position="none")
+
 
 ```
 

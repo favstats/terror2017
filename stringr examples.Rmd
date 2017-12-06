@@ -1,0 +1,40 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Learning StringR
+
+```{r}
+text <- c("Hallo du kleiner Mensch! Essen wir doch gerne einen Menschen?", "Lol", "Mensch (+12)")
+
+pacman::p_load(stringr)
+
+#count words
+stringr::str_count(text, pattern = "Mensch")
+
+#TRUE FALSE gerät
+str_detect(text, "Mensch")
+
+# replacen
+str_replace(text, "Mensch", "Alien")
+str_replace_all(text, "Mensch", "Alien")
+
+text %>% 
+  str_replace("\\(.*?\\)$", "") %>% 
+  str_trim()
+
+#.  Beliebiger Character
+#*  Mal
+#?  Unbekannt
+
+text %>% 
+  str_extract("\\(.*?\\)$") %>% 
+  str_trim()
+
+text %>% 
+  str_extract("\\d{1,6}") %>% 
+  str_trim() %>% 
+  as.numeric()
+
+```
