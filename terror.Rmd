@@ -12,45 +12,47 @@ output:
 pacman::p_load(tidyverse, rvest, XML)
 
 
-url_base<- c("https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in")
+url_base <- c("https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in")
 
-url_month <- c("January",
-           "February",
-           "March",
-           "April",
-           "May",
-           "June",
-           "July",
-           "August",
-           "September",
-           "October",
-           "November",
-           "December")
+url_month <- c(
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
+)
 
 url_months <- rep(url_month, 3)
 
 url_data <- paste(url_base, url_month, rep(2015:2017, each = 12), sep = "_")
 
-scrape <- function(html){
-  tab <- html %>% 
+scrape <- function(html) {
+  tab <- html %>%
     read_html() %>%
-    html_node("table") %>% 
+    html_node("table") %>%
     html_table()
-  if(nrow(tab) < 2){
-   placeholder <-  html %>% 
-    read_html() %>%
-    html_nodes("table")
-  tab <- html_table(placeholder[2], fill = TRUE)
+  if (nrow(tab) < 2) {
+    placeholder <- html %>%
+      read_html() %>%
+      html_nodes("table")
+    tab <- html_table(placeholder[2], fill = TRUE)
   }
   return(tab)
-} 
+}
 
 pagelist <- list()
-for(page in seq_along(url_data)) {
-  pagelist[[page]] <- scrape(url_data[[page]]) %>% 
-                        as.data.frame() %>% 
-                        mutate(month = url_months[page]) %>% 
-                        mutate_all(as.character)
+for (page in seq_along(url_data)) {
+  pagelist[[page]] <- scrape(url_data[[page]]) %>%
+    as.data.frame() %>%
+    mutate(month = url_months[page]) %>%
+    mutate_all(as.character)
   cat(page)
 }
 
@@ -62,51 +64,51 @@ terror$partof <- paste(terror$`Part of`, terror$Part.of)
 terror$deaths <- paste(terror$Dead, terror$dead)
 
 
-terror <- terror %>% 
-  mutate(partof = partof %>%   
-    str_replace_all("NA", "") %>% 
-    str_trim()) %>% 
-  mutate(deaths = deaths %>%   
-    str_replace_all("NA", "") %>% 
-    str_trim()) %>% 
-  mutate(deaths = deaths %>% 
-    str_replace("\\(.*?\\)$", "") %>% 
-    str_trim()) %>% 
-  mutate(deaths = deaths %>% 
-    str_replace_all("\\+", "") %>% 
-    str_trim()) %>% 
-  mutate(deaths = deaths %>% 
-           str_replace_all("UnknownEst. ", "") %>% 
-           str_trim()) #%>% 
-  mutate(deaths = case_when(
-    deaths %in% "Unknown" ~ NA
-  ))
+terror <- terror %>%
+  mutate(partof = partof %>%
+    str_replace_all("NA", "") %>%
+    str_trim()) %>%
+  mutate(deaths = deaths %>%
+    str_replace_all("NA", "") %>%
+    str_trim()) %>%
+  mutate(deaths = deaths %>%
+    str_replace("\\(.*?\\)$", "") %>%
+    str_trim()) %>%
+  mutate(deaths = deaths %>%
+    str_replace_all("\\+", "") %>%
+    str_trim()) %>%
+  mutate(deaths = deaths %>%
+    str_replace_all("UnknownEst. ", "") %>%
+    str_trim()) # %>%
+mutate(deaths = case_when(
+  deaths %in% "Unknown" ~ NA
+))
 
-terror$deaths %>% 
+terror$deaths %>%
   str_replace_all("\\+", "")
 
-terror$deaths %>% 
+terror$deaths %>%
   parse_number()
 
-terror$deaths %>% 
+terror$deaths %>%
   str_split("[:punc:]") # "\\s"
 
-# temp <- "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_December_2017" %>% 
+# temp <- "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_December_2017" %>%
 #   read_html() %>%
 #   html_nodes("table")
-# 
+#
 # html_table(temp[1]) ## Just the "legend" table
 # html_table(temp[2]) ## The table you're interested in
 
 pages_map <- url_data %>%
-         map(scrape)
+  map(scrape)
 
 terror <- bind_rows(pages_map)
 
-ss <-  "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_December_2017" %>% 
+ss <- "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_December_2017" %>%
   read_html() %>%
   html_nodes("table")
-ss <-  "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_June_2016" %>% 
+ss <- "https://en.wikipedia.org/wiki/List_of_terrorist_incidents_in_June_2016" %>%
   read_html() %>%
   html_nodes("table")
 
@@ -119,23 +121,22 @@ mean(2)
 
 ```{r}
 pages <- urldata %>%
-         map(read_html) %>%
-         map(. %>% 
-               html_nodes("table") 
-               )
+  map(read_html) %>%
+  map(. %>%
+    html_nodes("table"))
 
- jan_dat <- html_table(pages[[1]][1])  %>% as.data.frame()
- feb_dat <- html_table(pages[[2]][1])  %>% as.data.frame()
- mar_dat <- html_table(pages[[3]][1])  %>% as.data.frame()
- apr_dat <- html_table(pages[[4]][1])  %>% as.data.frame()
- may_dat <- html_table(pages[[5]][1])  %>% as.data.frame()
- jun_dat <- html_table(pages[[6]][1])  %>% as.data.frame()
- jul_dat <- html_table(pages[[7]][1])  %>% as.data.frame()
- aug_dat <- html_table(pages[[8]][1])  %>% as.data.frame()
- sep_dat <- html_table(pages[[9]][1])  %>% as.data.frame()
- oct_dat <- html_table(pages[[10]][1]) %>% as.data.frame()
- nov_dat <- html_table(pages[[11]][1]) %>% as.data.frame()
- dec_dat <- html_table(pages[[12]][1]) %>% as.data.frame()
+jan_dat <- html_table(pages[[1]][1]) %>% as.data.frame()
+feb_dat <- html_table(pages[[2]][1]) %>% as.data.frame()
+mar_dat <- html_table(pages[[3]][1]) %>% as.data.frame()
+apr_dat <- html_table(pages[[4]][1]) %>% as.data.frame()
+may_dat <- html_table(pages[[5]][1]) %>% as.data.frame()
+jun_dat <- html_table(pages[[6]][1]) %>% as.data.frame()
+jul_dat <- html_table(pages[[7]][1]) %>% as.data.frame()
+aug_dat <- html_table(pages[[8]][1]) %>% as.data.frame()
+sep_dat <- html_table(pages[[9]][1]) %>% as.data.frame()
+oct_dat <- html_table(pages[[10]][1]) %>% as.data.frame()
+nov_dat <- html_table(pages[[11]][1]) %>% as.data.frame()
+dec_dat <- html_table(pages[[12]][1]) %>% as.data.frame()
 
 # month <- c("January",
 #            "February",
@@ -149,7 +150,7 @@ pages <- urldata %>%
 #            "October",
 #            "November",
 #            "December")
-# 
+#
 # dat_ready <- list()
 # for( jj in seq_along(pages)){
 #   dat_ready[[jj]] <- html_table(pages[[1]][[1]])
@@ -159,69 +160,77 @@ pages <- urldata %>%
 
 # terror <- bind_rows(dat_ready)
 
- jan_dat$month <- "January"
- feb_dat$month <- "February"
- mar_dat$month <- "March"
- apr_dat$month <- "April"
- may_dat$month <- "May"
- jun_dat$month <- "June"
- jul_dat$month <- "July"
- aug_dat$month <- "August"
- sep_dat$month <- "September"
- oct_dat$month <- "October"
- nov_dat$month <- "November"
- dec_dat$month <- "December"
- 
- terror <- rbind(jan_dat,
-       feb_dat,
-       mar_dat,
-       apr_dat,
-       may_dat,
-       jun_dat,
-       jul_dat,
-       aug_dat,
-       sep_dat,
-       oct_dat,
-       nov_dat,
-       dec_dat)
+jan_dat$month <- "January"
+feb_dat$month <- "February"
+mar_dat$month <- "March"
+apr_dat$month <- "April"
+may_dat$month <- "May"
+jun_dat$month <- "June"
+jul_dat$month <- "July"
+aug_dat$month <- "August"
+sep_dat$month <- "September"
+oct_dat$month <- "October"
+nov_dat$month <- "November"
+dec_dat$month <- "December"
+
+terror <- rbind(
+  jan_dat,
+  feb_dat,
+  mar_dat,
+  apr_dat,
+  may_dat,
+  jun_dat,
+  jul_dat,
+  aug_dat,
+  sep_dat,
+  oct_dat,
+  nov_dat,
+  dec_dat
+)
 
 pacman::p_load(lubridate, car, readr, sjmisc)
-terror$date <- paste(terror$Date, terror$month, "2017") %>% 
-               dmy()
+terror$date <- paste(terror$Date, terror$month, "2017") %>%
+  dmy()
 
 
-terror <- terror %>% 
-  mutate(deaths = Recode(Dead,
-                         "'Unknown' = NA"),
-         deaths = parse_number(deaths))
-  
-injuries <- Recode(terror$Injured,"'Unknown' = NA")
+terror <- terror %>%
+  mutate(
+    deaths = Recode(
+      Dead,
+      "'Unknown' = NA"
+    ),
+    deaths = parse_number(deaths)
+  )
+
+injuries <- Recode(terror$Injured, "'Unknown' = NA")
 injuries <- parse_number(injuries)
 
 terror$deaths
 
 data.frame(table(terror$Perpetrator))
 
-conds <- terror %>% 
-  group_by(Perpetrator) %>% 
-  count() %>% 
+conds <- terror %>%
+  group_by(Perpetrator) %>%
+  count() %>%
   filter(n > 20)
 
 dput(conds$Perpetrator)
 
-terror %>% 
-  filter(Perpetrator %in% c("Al-Shabaab", 
-                            "Boko Haram", 
-                            "ELN", 
-                            "Islamic State", 
-                            "PKK", 
-                            "Taliban")) %>% 
-  filter(deaths > 20) %>% 
-  ggplot(aes(date, deaths, group = Perpetrator, color = Perpetrator)) + 
-        geom_line() +              
-        scale_x_date() + 
-        xlab("") + 
-        ylab("Death Count")
+terror %>%
+  filter(Perpetrator %in% c(
+    "Al-Shabaab",
+    "Boko Haram",
+    "ELN",
+    "Islamic State",
+    "PKK",
+    "Taliban"
+  )) %>%
+  filter(deaths > 20) %>%
+  ggplot(aes(date, deaths, group = Perpetrator, color = Perpetrator)) +
+  geom_line() +
+  scale_x_date() +
+  xlab("") +
+  ylab("Death Count")
 
 frq(terror$Dead)
 frq(terror$`Part of`)
@@ -231,27 +240,25 @@ table(terror$month)
 
 countdat_partof <- data.frame(table(terror$partof))
 
-countdat_partof %>% 
-  filter(Freq > 20) %>% 
-  arrange(Freq) %>% 
-  mutate(conflict = factor(Var1, levels = unique(Var1))) %>% 
-  ggplot(aes(conflict)) + 
-  geom_bar(aes(weight = Freq, fill = Var1)) + 
+countdat_partof %>%
+  filter(Freq > 20) %>%
+  arrange(Freq) %>%
+  mutate(conflict = factor(Var1, levels = unique(Var1))) %>%
+  ggplot(aes(conflict)) +
+  geom_bar(aes(weight = Freq, fill = Var1)) +
   coord_flip() +
-  theme(legend.position="none")
+  theme(legend.position = "none")
 
 countdat_terror <- data.frame(table(terror$Perpetrator))
 
-countdat_terror %>% 
-  filter(Freq > 20) %>% 
-  arrange(Freq) %>% 
-  mutate(terror_group = factor(Var1, levels = unique(Var1))) %>% 
-  ggplot(aes(terror_group)) + 
-  geom_bar(aes(weight = Freq, fill = Var1)) + 
+countdat_terror %>%
+  filter(Freq > 20) %>%
+  arrange(Freq) %>%
+  mutate(terror_group = factor(Var1, levels = unique(Var1))) %>%
+  ggplot(aes(terror_group)) +
+  geom_bar(aes(weight = Freq, fill = Var1)) +
   coord_flip() +
-  theme(legend.position="none")
-
-
+  theme(legend.position = "none")
 ```
 
 
@@ -265,23 +272,21 @@ topmovies <- read_html("http://www.imdb.com/chart/top")
 links <- topmovies %>%
   html_nodes(".titleColumn") %>%
   html_nodes("a") %>%
-  html_attr("href") %>% 
-  xml2::url_absolute("http://imdb.com") %>% 
+  html_attr("href") %>%
+  xml2::url_absolute("http://imdb.com") %>%
   .[1:5] # for testing
 
 pages <- links %>% map(read_html)
 
-title <- pages %>% 
-  map_chr(. %>% 
-    html_nodes("h1") %>% 
-    html_text()
-  )
-rating <- pages %>% 
-  map_dbl(. %>% 
-    html_nodes("strong span") %>% 
-    html_text() %>% 
-    as.numeric()
-  )
+title <- pages %>%
+  map_chr(. %>%
+    html_nodes("h1") %>%
+    html_text())
+rating <- pages %>%
+  map_dbl(. %>%
+    html_nodes("strong span") %>%
+    html_text() %>%
+    as.numeric())
 ```
 
 
@@ -294,9 +299,9 @@ your document.
 ```{r fig.width=6, fig.height=6, fig.align='center'}
 set.seed(123)
 n <- 1000
-x1  <- matrix(rnorm(n), ncol = 2)
-x2  <- matrix(rnorm(n, mean = 3, sd = 1.5), ncol = 2)
-x   <- rbind(x1, x2)
+x1 <- matrix(rnorm(n), ncol = 2)
+x2 <- matrix(rnorm(n, mean = 3, sd = 1.5), ncol = 2)
+x <- rbind(x1, x2)
 head(x)
 smoothScatter(x, xlab = "x1", ylab = "x2")
 ```
